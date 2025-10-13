@@ -1,24 +1,24 @@
-#was : FROM node:14.15.3-alpine 
+# Updated Nightscout Dockerfile using Node 18
 FROM node:18-alpine
 
 LABEL maintainer="Nightscout Contributors"
 
+# Set working directory
 WORKDIR /opt/app
+
+# Copy everything
 ADD . /opt/app
 
-# TODO: We should be able to do `RUN npm install --only=production`.
-# For this to work, we need to copy only package.json and things needed for `npm`'s to succeed.
-# TODO: Do we need to re-add `npm audit fix`? Or should that be part of a development process/stage?
-RUN npm install --cache /tmp/empty-cache && \
-  npm run postinstall && \
-  npm run env && \
-  rm -rf /tmp/*
-  # TODO: These should be added in the future to correctly cache express-minify content to disk
-  # Currently, doing this breaks the browser cache.
-  # mkdir /tmp/public && \
-  # chown node:node /tmp/public
+# Install build tools and clean up after
+RUN apk add --no-cache python3 make g++ \
+ && mkdir -p /tmp/empty-cache \
+ && npm install --cache /tmp/empty-cache \
+ && npm run postinstall \
+ && npm run env \
+ && rm -rf /tmp/* /root/.npm /root/.cache
 
-USER node
-EXPOSE 1337
+# Healthcheck for Render (optional but helpful)
+HEALTHCHECK CMD wget -q -O - http://localhost:${PORT:-10000}/api/v1/status || exit 1
 
+# Start Nightscout
 CMD ["node", "lib/server/server.js"]
