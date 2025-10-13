@@ -1,4 +1,5 @@
-FROM node:14.15.3-alpine
+#was : FROM node:14.15.3-alpine
+FROM node:18-alpine
 
 LABEL maintainer="Nightscout Contributors"
 
